@@ -1,0 +1,19 @@
+#!/bin/bash -x
+
+if ! id -u web > /dev/null 2>&1; then
+    useradd -M -s /usr/sbin/nologin web
+fi
+
+if [ -f /run/secrets/secrets ]; then
+    . /run/secrets/secrets
+fi
+
+exec sudo -E -u web "$@" &
+
+if [ -f /run/secrets/secrets ]; then
+    awk -F'=' '{if ($1!="") {print $1}}' /run/secrets/secrets | while read -r VAR; do
+        unset "$VAR"
+    done
+fi
+
+wait
